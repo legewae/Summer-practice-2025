@@ -10,11 +10,15 @@
     }
     public class Cruiser: ISpaceship
     {
-        void ISpaceship.MoveForward() { }
-        void ISpaceship.Rotate(int angle) { }
-        void ISpaceship.Fire() { }
+        void ISpaceship.MoveForward() { Console.WriteLine($"Крейсер двигается со скоростью {Speed}"); }
+        void ISpaceship.Rotate(int angle) { Console.WriteLine($"Крейсер повернулся на {angle} градусов");
+            Angle += angle;
+            Angle = Angle % 360;
+        }
+        void ISpaceship.Fire() { Console.WriteLine($"Крейсер выстрелил с силой {FirePower}"); }
         public int Speed { get; }
         public int FirePower { get; }
+        public int Angle { get; set; }
 
         public Cruiser()
         {
@@ -24,11 +28,17 @@
     }
     public class Fighter : ISpaceship
     {
-        void ISpaceship.MoveForward() { }
-        void ISpaceship.Rotate(int angle) { }
-        void ISpaceship.Fire() { }
+        void ISpaceship.MoveForward() { Console.WriteLine($"Истребитель двигается со скоростью {Speed}"); }
+        void ISpaceship.Rotate(int angle)
+        {
+            Console.WriteLine($"Истребитель повернулся на {angle} градусов");
+            Angle += angle;
+            Angle = Angle % 360;
+        }
+        void ISpaceship.Fire() { Console.WriteLine($"Истребитель выстрелил с силой {FirePower}"); }
         public int Speed { get; }
         public int FirePower { get; }
+        public int Angle { get; set; }
 
         public Fighter()
         {
