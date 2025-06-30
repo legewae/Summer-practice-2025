@@ -1,12 +1,15 @@
 using System.Reflection;
+using System.Text;
 using task07;
 using Xunit;
 
 public class AttributeReflectionTests
 {
+
     [Fact]
     public void Class_HasDisplayNameAttribute()
     {
+        Console.OutputEncoding = Encoding.UTF8;
         var type = typeof(SampleClass);
         var attribute = type.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
@@ -16,6 +19,7 @@ public class AttributeReflectionTests
     [Fact]
     public void Method_HasDisplayNameAttribute()
     {
+        Console.OutputEncoding = Encoding.UTF8;
         var method = typeof(SampleClass).GetMethod("TestMethod");
         var attribute = method.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
@@ -25,6 +29,7 @@ public class AttributeReflectionTests
     [Fact]
     public void Property_HasDisplayNameAttribute()
     {
+        Console.OutputEncoding = Encoding.UTF8;
         var prop = typeof(SampleClass).GetProperty("Number");
         var attribute = prop.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
@@ -34,6 +39,7 @@ public class AttributeReflectionTests
     [Fact]
     public void Class_HasVersionAttribute()
     {
+        Console.OutputEncoding = Encoding.UTF8;
         var type = typeof(SampleClass);
         var attribute = type.GetCustomAttribute<VersionAttribute>();
         Assert.NotNull(attribute);
