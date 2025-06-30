@@ -1,4 +1,4 @@
-using System.Reflection;
+п»їusing System.Reflection;
 using System.Text;
 using task07;
 using Xunit;
@@ -9,37 +9,33 @@ public class AttributeReflectionTests
     [Fact]
     public void Class_HasDisplayNameAttribute()
     {
-        Console.OutputEncoding = Encoding.UTF8;
         var type = typeof(SampleClass);
         var attribute = type.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
-        Assert.Equal("Пример класса", attribute.DisplayName);
+        Assert.Equal("РџСЂРёРјРµСЂ РєР»Р°СЃСЃР°", attribute.DisplayName);
     }
 
     [Fact]
     public void Method_HasDisplayNameAttribute()
     {
-        Console.OutputEncoding = Encoding.UTF8;
         var method = typeof(SampleClass).GetMethod("TestMethod");
         var attribute = method.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
-        Assert.Equal("Тестовый метод", attribute.DisplayName);
+        Assert.Equal("РўРµСЃС‚РѕРІС‹Р№ РјРµС‚РѕРґ", attribute.DisplayName);
     }
 
     [Fact]
     public void Property_HasDisplayNameAttribute()
     {
-        Console.OutputEncoding = Encoding.UTF8;
         var prop = typeof(SampleClass).GetProperty("Number");
         var attribute = prop.GetCustomAttribute<DisplayNameAttribute>();
         Assert.NotNull(attribute);
-        Assert.Equal("Числовое свойство", attribute.DisplayName);
+        Assert.Equal("Р§РёСЃР»РѕРІРѕРµ СЃРІРѕР№СЃС‚РІРѕ", attribute.DisplayName);
     }
 
     [Fact]
     public void Class_HasVersionAttribute()
     {
-        Console.OutputEncoding = Encoding.UTF8;
         var type = typeof(SampleClass);
         var attribute = type.GetCustomAttribute<VersionAttribute>();
         Assert.NotNull(attribute);
