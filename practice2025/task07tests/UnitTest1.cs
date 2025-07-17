@@ -121,4 +121,19 @@
 
         Assert.Contains("Атрибут:", output);
     }
+
+    [Fact]
+    public void DLL_ContainsProperties()
+    {
+
+        var writer = new StringWriter();
+
+        Console.SetOut(writer);
+
+        ConsoleRunner.Program.Main(new string[] { "task07.dll" });
+
+        var output = writer.ToString();
+
+        Assert.Contains("Свойство ", output);
+    }
 }
