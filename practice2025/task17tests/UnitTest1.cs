@@ -1,134 +1,119 @@
 using Xunit;
-using task17;
+using task18;
 using System.Runtime.CompilerServices;
 
-public class command1: ICommand{
-    public bool commandExecuted = false;
+
+public class LongCommand: ILongRunningCommand
+{
+    public int times = 3;
+    public bool IsCompleted { get; set; } = false;
+
     public void Execute()
     {
-        Console.WriteLine("Command1 executed");
-        commandExecuted = true;
+        times--;
+        if (times <= 0) IsCompleted = true; 
     }
 }
 
-public class command2 : ICommand
+public class ShortCommand: ICommand
 {
-    public bool commandExecuted = false;
+    public bool IsCompleted { get; set; } = false;
     public void Execute()
     {
-        Console.WriteLine("Command2 executed");
-        commandExecuted = true;
+        IsCompleted = true;
     }
 }
 
-public class command3 : ICommand
+public class DelayedLongCommand : ILongRunningCommand
 {
-    public bool commandExecuted = false;
-    public void Execute()
-    {
-        Console.WriteLine("Command3 executed");
-        commandExecuted = true;
-    }
-}
+    public int times = 10;
+    public bool IsCompleted { get; set; } = false;
 
-public class longCommand : ICommand
-{
-    public bool commandExecuted = false;
     public void Execute()
     {
-        Thread.Sleep(1000);
-        Console.WriteLine("Long command executed");
-        commandExecuted = true;
+        Thread.Sleep(50);
+        times--;
+        if (times <= 0) IsCompleted = true;
     }
 }
 public class ServerThreadTests  
 {
     [Fact]
-    public void ExecuteCommand_ShouldRunCommand()
+    public void LongCommand_ShouldFinish()
     {
         var server = new ServerThread();
 
-        var testCommand = new command1();
+        var testCommand = new LongCommand();
 
         server.AddCommand(testCommand);
         Thread.Sleep(100);
 
-        Assert.True(testCommand.commandExecuted);
+        Assert.True(testCommand.IsCompleted);
 
         server.AddCommand(new HardStopCommand(server));
     }
 
     [Fact]
-    public void ExecuteCommand_ShouldRunMultipleCommands()
+    public void LongCommand_ShouldFinishWithShortCommands()
     {
         var server = new ServerThread();
 
-        var testCommand1 = new command1();
-        var testCommand2 = new command2();
-        var testCommand3 = new command3();
+        var shortCommand1 = new ShortCommand();
+        var shortCommand2 = new ShortCommand();
+        var longCommand = new LongCommand();
 
-        server.AddCommand(testCommand1);
-        server.AddCommand(testCommand2);
-        server.AddCommand(testCommand3);
-        Thread.Sleep(2000);
+        server.AddCommand(shortCommand1);
+        server.AddCommand(longCommand);
+        server.AddCommand(shortCommand2);
 
-        Assert.True(testCommand1.commandExecuted);
-        Assert.True(testCommand2.commandExecuted);
-        Assert.True(testCommand3.commandExecuted);
-
-        server.AddCommand(new HardStopCommand(server));
-    }
-
-    [Fact]
-    public void ExecuteCommand_SoftStopPreventsFromExecution()
-    {
-        var server = new ServerThread();
-
-        var testCommand1 = new command1();
-        var testCommand3 = new command3();
-
-        server.AddCommand(testCommand1);
-        server.AddCommand(new SoftStopCommand(server));
         Thread.Sleep(100);
-        server.AddCommand(testCommand3);
 
-        Assert.True(testCommand1.commandExecuted);
-        Assert.False(testCommand3.commandExecuted);
-    }
+        Assert.True(shortCommand1.IsCompleted);
+        Assert.True(shortCommand2.IsCompleted);
+        Assert.True(longCommand.IsCompleted);
 
-    [Fact]
-    public void ExecuteCommand_LongCommandGivesEnoughTimeToSkipSoftStop()
-    {
-        var server = new ServerThread();
-
-        var testCommand1 = new command1();
-        var longCommand = new command3();
-
-        server.AddCommand(longCommand);
-        server.AddCommand(new SoftStopCommand(server));
-        server.AddCommand(testCommand1);
-
-        Thread.Sleep(2000);
-
-        Assert.True(testCommand1.commandExecuted);
-        Assert.True(longCommand.commandExecuted);
-    }
-
-    [Fact]
-    public void ExecuteCommand_HardStopPreventsFurtherCommands()
-    {
-        var server = new ServerThread();
-
-        var testCommand1 = new command1();
-        var longCommand = new command3();
-
-        server.AddCommand(longCommand);
         server.AddCommand(new HardStopCommand(server));
-        server.AddCommand(testCommand1);
+    }
 
-        Thread.Sleep(2000);
+    [Fact]
+    public void LongCommand_ShouldFinishMultipleLongCommands()
+    {
+        var server = new ServerThread();
 
-        Assert.False(testCommand1.commandExecuted);
-        Assert.True(longCommand.commandExecuted);
+        var longCommand1 = new LongCommand();
+        var longCommand2 = new LongCommand();
+        var longCommand3 = new LongCommand();
+
+        server.AddCommand(longCommand1);
+        server.AddCommand(longCommand2);
+        server.AddCommand(longCommand3);
+
+        Thread.Sleep(100);
+
+        Assert.True(longCommand1.IsCompleted);
+        Assert.True(longCommand2.IsCompleted);
+        Assert.True(longCommand3.IsCompleted);
+
+        server.AddCommand(new HardStopCommand(server));
+    }
+
+    [Fact]
+    public void LongCommand_ShouldNotStopShortCommandsFromExecuting()
+    {
+        var server = new ServerThread();
+
+        var longCommand = new DelayedLongCommand();
+        var shortCommand = new ShortCommand();
+
+        server.AddCommand(longCommand);
+        server.AddCommand(shortCommand);
+
+        Thread.Sleep(100);
+
+        Assert.False(longCommand.IsCompleted);
+        Assert.True(shortCommand.IsCompleted);
+
+
+        server.AddCommand(new HardStopCommand(server));
     }
 }

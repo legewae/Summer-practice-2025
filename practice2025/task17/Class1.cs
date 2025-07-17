@@ -1,11 +1,54 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 
-namespace task17
+namespace task18
 {
     public interface ICommand
     {
         void Execute();
+    }
+
+    public interface ILongRunningCommand : ICommand
+    {
+        bool IsCompleted { get; set; }
+    }
+
+    public interface IScheduler
+    {
+        bool HasCommand();
+        ICommand Select();
+        void Add(ICommand cmd);
+    }
+
+    public class RoundRobinScheduler : IScheduler
+    {
+        private readonly Queue<ICommand> _commands = new Queue<ICommand>();
+       
+
+        public void Add(ICommand command)
+        {
+            _commands.Enqueue(command);
+        }
+
+        public bool HasCommand()
+        {
+            return _commands.Count > 0;
+        }
+
+        public ICommand Select()
+        {
+            if (_commands.Count == 0) return null;
+
+            var command = (ILongRunningCommand)_commands.Dequeue();
+
+            if (!command.IsCompleted)
+            {
+                _commands.Enqueue(command);
+            }
+            return command;
+        }
     }
 
     public class HardStopCommand : ICommand
@@ -46,9 +89,10 @@ namespace task17
 
     public class ServerThread
     {
-        private ConcurrentQueue<ICommand> _commandQueue = new();
-        private Thread _workerThread;
-        private AutoResetEvent _commandAvailable = new(false);
+        private readonly ConcurrentQueue<ICommand> _commandQueue = new ConcurrentQueue<ICommand>();
+        private readonly Thread _workerThread;
+        private readonly AutoResetEvent _commandAvailable = new AutoResetEvent(false);
+        private readonly IScheduler _scheduler = new RoundRobinScheduler();
         private volatile bool _hardStopRequested = false;
         private volatile bool _softStopRequested = false;
 
@@ -63,8 +107,17 @@ namespace task17
         public void AddCommand(ICommand command)
         {
             if (_hardStopRequested) return;
-            _commandQueue.Enqueue(command);
-            _commandAvailable.Set();
+
+            if (command is ILongRunningCommand)
+            {
+                _scheduler.Add(command);
+                _commandAvailable.Set();
+            }
+            else
+            {
+                _commandQueue.Enqueue(command);
+                _commandAvailable.Set();
+            }
         }
 
         internal void HardStop()
@@ -76,6 +129,7 @@ namespace task17
         internal void SoftStop()
         {
             _softStopRequested = true;
+            _commandAvailable.Set();
         }
 
         private void ProcessCommands()
@@ -84,24 +138,45 @@ namespace task17
             {
                 if (_commandQueue.TryDequeue(out var command))
                 {
-                    try
+                    ExecuteCommand(command);
+                    continue;
+                }
+
+                if (_scheduler.HasCommand())
+                {
+                    var longRunningCommand = _scheduler.Select();
+                    if (longRunningCommand != null)
                     {
-                        command.Execute();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Command failed with error: {ex.Message}, exception handler should be ");
+                        ExecuteCommand(longRunningCommand);
+                        continue;
                     }
                 }
-                else if (_softStopRequested)
+
+                if (_softStopRequested && !_scheduler.HasCommand())
                 {
                     return;
                 }
-                else
+
+                _commandAvailable.WaitOne();
+                _commandAvailable.Reset();
+            }
+        }
+
+        private void ExecuteCommand(ICommand command)
+        {
+            try
+            {
+                command.Execute();
+
+                if (command is ILongRunningCommand)
                 {
-                    _commandAvailable.WaitOne();
-                    _commandAvailable.Reset();
+                    if(!((ILongRunningCommand)command).IsCompleted)
+                    _scheduler.Add(command);
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"We need a error handler real fast!!!");
             }
         }
     }
