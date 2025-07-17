@@ -1,4 +1,4 @@
-using task10;
+п»їusing task10;
 
 namespace task10tests
 {
@@ -14,7 +14,7 @@ namespace task10tests
 
             string output = writer.ToString();
 
-            Assert.Contains("Директории не существует!", output);
+            Assert.Contains("Р”РёСЂРµРєС‚РѕСЂРёРё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚!", output);
 
             writer.Dispose();
             Console.SetOut(Console.Out);
@@ -31,7 +31,7 @@ namespace task10tests
             pluginsLoader.LoadPlugins();
 
             string output = writer.ToString();
-            Assert.Contains("Final plugin has loaded!", output); //Плагин, зависимый от всех, загружен успешно
+            Assert.Contains("Final plugin has loaded!", output); //РџР»Р°РіРёРЅ, Р·Р°РІРёСЃРёРјС‹Р№ РѕС‚ РІСЃРµС…, Р·Р°РіСЂСѓР¶РµРЅ СѓСЃРїРµС€РЅРѕ
 
             writer.Dispose();
             Console.SetOut(Console.Out);
