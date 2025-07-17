@@ -3,6 +3,8 @@ using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.Reflection;
 using System.CodeDom;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
 
 public class Calc
 {
@@ -16,15 +18,15 @@ public class Calc
         public int Div(int a, int b) => a / b;
         }";
 
-        CSharpCodeProvider compiler = new CSharpCodeProvider();
-        CompilerParameters parameters = new CompilerParameters
-        {
-            GenerateInMemory = true,
-            GenerateExecutable = false
-        };
+        var compilation = CSharpCompilation.Create("assemblator3000")
+            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
+            .AddSyntaxTrees(CSharpSyntaxTree.ParseText(classCode));
 
-        CompilerResults results = compiler.CompileAssemblyFromSource(parameters, classCode);
+        var memoryStream = new MemoryStream();
+        var emit = compilation.Emit(memoryStream);
+        var assembly = Assembly.Load(memoryStream.ToArray());
 
-        return Activator.CreateInstance(results.CompiledAssembly.GetType("Calculator"));
+        return assembly.CreateInstance("Calculator")!;
     }
 }
